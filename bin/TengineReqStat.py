@@ -7,7 +7,7 @@ Created on 2016年7月7日
 '''
 
 '''
-nginx状态 数据上报到open-falcon
+nginx状态 数据上报到open-falcon，从5个维度监控nginx: 流量维度,并发连接数维度,并发请求数(状态码),req的平均时间维度,upstream维度
 1、需要安装tengine
 
 2、reqstat模块文档说明http://tengine.taobao.org/document_cn/http_reqstat_cn.html
@@ -17,7 +17,7 @@ ansible.api.xz.com,192.168.33.11:80,164,456,2,2,2,0,0,0,0,12,2,12,2,2,0,0,0,0,0,
 192.168.33.11,192.168.33.11:23456,7317,6482,6,20,18,0,2,0,0,0,0,0,0,18,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0
 
 4、todo
-新增从配置文件读取监控域名,去掉参数化
+新增从配置文件读取监控域名,去掉参数
 '''
 
 import argparse
@@ -198,6 +198,7 @@ class TengineReqStat(object):
         
     def http_code(self):
         '''
+        并发请求数(状态码)
         stat[0]=host,stat[1]=ip:port,stat[5]=req_total
         stat[6]=http_2xx,stat[7]=http_3xx,stat[8]=http_4xx
         stat[9]=http_5xx,stat[10]=httpotherstatus
@@ -300,9 +301,9 @@ class TengineReqStat(object):
                 
         return ret
         
-    # req的平均时间维度
     def req_time(self):
         '''
+        req的平均时间维度
         stat[0]=host,stat[1]=ip:port,stat[5]=req_total
         stat[11]=rt,stat[12]=ups_req,stat[13]=ups_rt
         stat[11]/stat[5]:总时间平均
