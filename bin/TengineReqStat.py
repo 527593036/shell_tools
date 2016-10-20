@@ -211,7 +211,7 @@ class TengineReqStat(object):
         '''
         # 当前请求的结果
         ret1 = {}
-        for stat in self.ng_stat[0]:
+        for stat in self.ng_stat[0]:s
             stat = stat.strip().split(',')
             ret1[stat[0]] = [stat[1],stat[5],stat[6],stat[7],stat[8],stat[9],stat[10]]
             
