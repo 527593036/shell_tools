@@ -1,0 +1,102 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*- 
+'''
+@author: zhujin
+'''
+
+import os
+import smtplib
+import mimetypes
+from hashlib import md5
+from email import encoders
+from email.mime.text import MIMEText ##发送html格式邮件模块 
+from email.mime.multipart import MIMEMultipart ##发送邮件附件模块
+from email.mime.base import MIMEBase
+import argparse
+
+##邮件附件
+def attach_file(filepath):
+	if os.path.isfile(filepath):
+		filename = os.path.basename(filepath)
+	else:
+		print filepath + "is not exists"
+
+	if filename:
+		ctype, encoding = mimetypes.guess_type(filename)
+		if ctype is None or encoding is not None:
+			ctype = 'application/octet-stream'
+		maintype, subtype = ctype.split('/', 1)
+		fp = open(filepath, 'rb')
+		content=fp.read()
+		hash=md5()
+		hash.update(content)
+		att = MIMEBase(maintype, subtype)
+		att.set_payload(content)
+		fp.close()
+		encoders.encode_base64(att)
+		att.add_header('Content-Disposition', 'attachment', filename=filename)
+	return att
+
+
+def mail(mail_host,from_addr,mail_user,mail_pass,to_addrs,email_body='',sub_type = '',cc_addrs='',title='',filepaths=''):
+	msg = MIMEMultipart()
+	if filepaths != '':
+		for filepath in filepaths:
+			msg.attach(attach_file(filepath)) ##添加附件
+	if sub_type == 'html':
+		msg.attach(MIMEText(email_body,_subtype='html',_charset='UTF-8')) ##添加html邮件正文
+	else:
+		msg.attach(MIMEText(email_body,_charset='UTF-8')) ##添加默认格式邮件正文
+	msg['Subject'] = title ##添加邮件标题
+	msg['From'] = from_addr  ##发送邮箱
+	msg['To'] = ';'.join(to_addrs) ##收件邮箱
+	msg['Cc'] = ';'.join(cc_addrs) ##抄送邮箱
+
+	try:
+		s = smtplib.SMTP() ##创建SMTP对象
+		s.connect(mail_host) ##连接邮件服务器
+		s.login(mail_user,mail_pass) ##登陆邮件服务器
+		s.sendmail(from_addr, to_addrs, msg.as_string()) ##发送邮件 
+		s.close() ##关闭邮件对象
+		return True
+	except Exception, e:
+		print str(e) 
+		return False
+
+def main():
+	parser = argparse.ArgumentParser()
+	parser.add_argument('-s',action="store",dest='mail_host',help="smtp mail server")
+	parser.add_argument('-f',action="store",dest='from_addr',help='from (sender) email address')
+	parser.add_argument('-xu',action="store",dest='mail_user',help='username for SMTP authentication')
+	parser.add_argument('-xp',action="store",dest='mail_pass',help='password for SMTP authentication')
+	parser.add_argument('-t',action="store",nargs='*',dest='to_addr',help="email addrs,example:-t 'a@test.com' 'b@test.com'")
+	parser.add_argument('-m',action="store",dest='email_body',help='message body',default='')
+	parser.add_argument('-type',action="store",dest='subtype',help="email body MIMEText type,example:-type html",default='')
+	parser.add_argument('-cc',action="store",nargs='*',dest='cc_addr',help="email addrs,example:-cc 'a@test.com' 'b@test.com'",default='')
+	parser.add_argument('-u',action="store",dest='subject',help='email message subject',default='')	
+	parser.add_argument('-a',action="store",nargs='*',dest='attach_files',help="attach files,example: -a 'a.txt' 'b.txt'",default='') 
+
+	args = parser.parse_args()
+	mail_server = args.mail_host
+	f_addr = args.from_addr
+	m_user = args.mail_user
+	m_pass = args.mail_pass
+	t_addrs = args.to_addr
+	m_body = args.email_body
+	m_subtype = args.subtype
+	c_addrs = args.cc_addr
+	m_title = args.subject
+	m_attach = args.attach_files
+
+	if mail_server and f_addr and m_user and m_pass and t_addrs:
+		if mail(mail_server,f_addr,m_user,m_pass,t_addrs,email_body = m_body,sub_type=m_subtype,cc_addrs=c_addrs,title = m_title,filepaths = m_attach):
+			print "发送邮件成功"
+		else:
+			print "发送邮件失败"
+	else:
+		print "usage: sendmail -h"
+		print "example: sendmail -s mail_host -f from_addr -xu mail_user -xp mail_pass -t to_addrs [options]"
+	#	print "aa"
+
+if __name__ == '__main__':
+	main()

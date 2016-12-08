@@ -14,3 +14,5 @@
 
 6、control_client.sh,consul client进程管理工具
 
+7、sendmail, 邮件发送工具python版
+
